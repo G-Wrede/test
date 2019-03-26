@@ -3,10 +3,9 @@
   Der Hobbyelektroniker
   Der einfache Einstieg in Arduino & Co - 11
  */
-  Test des Zufallsgenerators sofort
-*/
+Test des Zufallsgenerators sofort * /
 
-const int tasterPin = 7 ;
+    const int tasterPin = 7;
 
 int statistik[] = {0, 0, 0, 0, 0, 0}; // Array initialisiert mit 0
 
@@ -22,12 +21,12 @@ int check(int anzahl) {
     statistik[zahl]++;
   }
 
-Serial.print("Anzahl Wuerfe: ");
-Serial.println(anzahl);
+  Serial.print("Anzahl Wuerfe: ");
+  Serial.println(anzahl);
 
-for (int i = 1; i < 6; i++) {
-  Serial.print(i);
-  Serial.print(": ");
+  for (int i = 1; i < 6; i++) {
+    Serial.print(i);
+    Serial.print(": ");
     Serial.print(statistik[i]);
     Serial.print(" / ");
     Serial.print(100.00 / anzahl * statistik[i]);
