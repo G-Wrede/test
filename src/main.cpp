@@ -2,10 +2,10 @@
 /*
   Der Hobbyelektroniker
   Der einfache Einstieg in Arduino & Co - 11
- */
-Test des Zufallsgenerators sofort * /
+
+Test des Zufallsgenerators sofort */
 
-    const int tasterPin = 7;
+const int tasterPin = 7;
 
 int statistik[] = {0, 0, 0, 0, 0, 0}; // Array initialisiert mit 0
 
@@ -37,7 +37,7 @@ int check(int anzahl) {
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(57600);
   pinMode(tasterPin, INPUT_PULLUP);
 }
 
