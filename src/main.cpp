@@ -3,7 +3,7 @@
   Würfel mit 5 Augen
   mit Zufall und Statistik
   Lösung der Übungsaufgabe
-
+
   Version 1.0
   Der Hobbyelektroniker
   Der Code ist Public Domain und kann ohne Einschränkungen frei verwendet werden
@@ -15,88 +15,58 @@
  *    4
  * 2     3
  */
-const int anzahl_augen = 5;
-const int augen_pin[anzahl_augen] = {2, 3, 4, 5, 6};
+
+// void blink(int, int, int, bool);
+const int anzahl_augen = 6;
+const int ledPin[anzahl_augen] = {2, 3, 4, 5, 6, 8};
 const int tasterPin = 7;
+unsigned long curtime = 0;
 
-int statistikArray[] = {0, 0, 0, 0, 0, 0}; // Werte für 'aus',1,2,3,4,5
-
-// Anzeigen definieren
-int anzeige[][anzahl_augen] = {
-    {0, 0, 0, 0, 0}, // aus
-    {0, 0, 0, 0, 1}, // 1
-    {1, 0, 0, 1, 0}, // 2
-    {1, 0, 0, 1, 1}, // 3
-    {1, 1, 1, 1, 0}, // 4
-    {1, 1, 1, 1, 1}  // 5
-};
-
-void test() {
-  // alle LED ein
-  for (int i = 0; i < anzahl_augen; i++) {
-    digitalWrite(augen_pin[i], HIGH);
-  }
-  delay(2000);
-  // alle LED aus
-  for (int i = 0; i < anzahl_augen; i++) {
-    digitalWrite(augen_pin[i], LOW);
+void blink(int led, int blTime, int durTime, bool ledOFF) {
+  static int ledTime[anzahl_augen] = {0};
+  static unsigned long startzeit[anzahl_augen] = {0};
+  static unsigned long startDurzeit[anzahl_augen] = {0};
+  ledTime[led] = durTime;
+  if (ledOFF) {
+    digitalWrite(ledPin[led], 0);
+    ledTime[led] = 0;
+    startzeit[led] = 0;
+    startDurzeit[led] = 0;
+  } else if (startDurzeit[led] == 0) {
+    startDurzeit[led] = curtime;
+  } else if (curtime - startDurzeit[led] > ledTime[led]) {
+    digitalWrite(ledPin[led], HIGH);
+  } else if ((curtime - startzeit[led]) > blTime) {
+    digitalWrite(ledPin[led], !digitalRead(ledPin[led]));
+    startzeit[led] = curtime;
   }
 }
 
-void zeige(int zahl) {
-  for (int i = 0; i < anzahl_augen; i++) {
-    digitalWrite(augen_pin[i], anzeige[zahl][i]);
+void taster() {
+  if (!digitalRead(tasterPin)) {
+    digitalWrite(ledPin[0], HIGH);
+    for (int i = 1; i < anzahl_augen; i++) {
+      blink(i, 0, 0, 1);
+    }
+  } else {
+    digitalWrite(ledPin[0], LOW);
   }
-}
-
-void wuerfeln() {
-  // Zum Start alles aus
-  zeige(0);
-  delay(500);
-  for (int i = 0; i < 30; i++) {
-    zeige(random(1, 6));
-    delay(100);
-  }
-  delay(500);
 }
 
 void setup() {
   Serial.begin(57600);
   for (int i = 0; i < anzahl_augen; i++) {
-    pinMode(augen_pin[i], OUTPUT);
+    pinMode(ledPin[i], OUTPUT);
   }
   pinMode(tasterPin, INPUT_PULLUP);
-  randomSeed(analogRead(0));
-  //  test();
-}
-
-void statistik(int anzahl) {
-  Serial.println();
-  Serial.print("Anzahl Würfe: ");
-  Serial.println(anzahl);
-  for (int i = 0; i < 6; i++)
-    statistikArray[i] = 0;
-  for (int i = 0; i < anzahl; i++) {
-    int zahl = random(1, 6);
-    zeige(zahl);
-    statistikArray[zahl]++;
-  }
-  for (int i = 1; i < 6; i++) { // 'aus' wird nicht ausgegeben
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.print(statistikArray[i]);
-    Serial.print(" / ");
-    Serial.print(100.0 / anzahl * statistikArray[i]);
-    Serial.println(" %");
-  }
-  delay(500);
 }
 
 void loop() {
-  if (!digitalRead(tasterPin)) {
-    statistik(10);
-    statistik(100);
-    statistik(1000);
-    statistik(10000);
-  }
+  curtime = millis();
+  taster();
+  blink(2, 200, 5000, 0);
+  blink(3, 200, 8000, 0);
+  blink(4, 900, 10000, 0);
+  blink(1, 1500, 15000, 0);
+  blink(5, 100, 3000, 0);
 }
