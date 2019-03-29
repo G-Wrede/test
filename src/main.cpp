@@ -34,7 +34,7 @@ void blink(int led, int blTime, int durTime, bool ledOFF) {
     startDurzeit[led] = 0;
   } else if (startDurzeit[led] == 0) {
     startDurzeit[led] = curtime;
-  } else if (curtime - startDurzeit[led] > ledTime[led]) {
+  } else if (curtime - startDurzeit[led] > ledTime[led] && ledTime[led] > 0) {
     digitalWrite(ledPin[led], HIGH);
   } else if ((curtime - startzeit[led]) > blTime) {
     digitalWrite(ledPin[led], !digitalRead(ledPin[led]));
@@ -44,12 +44,10 @@ void blink(int led, int blTime, int durTime, bool ledOFF) {
 
 void taster() {
   if (!digitalRead(tasterPin)) {
-    digitalWrite(ledPin[0], HIGH);
+    //digitalWrite(ledPin[0], HIGH);
     for (int i = 1; i < anzahl_augen; i++) {
       blink(i, 0, 0, 1);
     }
-  } else {
-    digitalWrite(ledPin[0], LOW);
   }
 }
 
@@ -64,7 +62,8 @@ void setup() {
 void loop() {
   curtime = millis();
   taster();
-  blink(2, 200, 5000, 0);
+  blink(0, 500, 0, 0);
+  blink(2, 200, 6000, 0);
   blink(3, 200, 8000, 0);
   blink(4, 900, 10000, 0);
   blink(1, 1500, 15000, 0);
