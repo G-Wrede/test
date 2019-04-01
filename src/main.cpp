@@ -25,7 +25,7 @@ const int blinkTime = 100;
 unsigned long curtime = 0;
 int resettimer = 0;
 
-void blink(int led, int blTime, int durTime, bool ledReset ) {
+void blink(int led, int blTime, int durTime, bool ledReset) {
   static int ledTime[anzahl_augen] = {0};
   static unsigned long startzeit[anzahl_augen] = {0};
   static unsigned long startDurzeit[anzahl_augen] = {0};
@@ -56,11 +56,11 @@ void start() {
   static unsigned long starttimer = curtime;
   int i = 0;
   blink(0, 500, 0, 0);
-  for(i = 0; i < anzahl_augen; i++) {
+  for (i = 0; i < anzahl_augen; i++) {
     if (curtime - starttimer > ledInterval * i)
-    blink(i + 1, blinkTime, ledInterval, 0);
+      blink(i + 1, blinkTime, ledInterval, 0);
   }
-  if (curtime - starttimer > ledInterval * (anzahl_augen -  1) || resettimer) {
+  if (curtime - starttimer > ledInterval * (anzahl_augen - 1) || resettimer) {
     resettimer = 0;
     starttimer = curtime;
     for (int j = 0; j < anzahl_augen; j++) {
