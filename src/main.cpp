@@ -11,6 +11,7 @@
  */
 
 const int anzahl_augen = 5;
+<<<<<<< HEAD
 const int ledPin[anzahl_augen] = {2, 3, 4, 5, 6}; // Arduino Pins
 const int tasterPin = 7;        // Eingang fuer den Taster
 const int ledInterval = 15000;  // wechselintervall zum naechsten Led in ms
@@ -24,6 +25,15 @@ Parameter:
   durTime = dauer des blinkens danach bleibt das Led an
   ledReset= wenn 1 dann wird der Ausgang zurueck gesetzt
  */
+=======
+const int ledPin[anzahl_augen] = {2, 3, 4, 5, 6};
+const int tasterPin = 7;
+const int ledInterval = 1000;
+const int blinkTime = 100;
+unsigned long curtime = 0;
+int resettimer = 0;
+
+>>>>>>> 57c6805bcf8249c044cc1b246a7c7790350cac92
 void blink(int led, int blTime, int durTime, bool ledReset) {
   static int ledTime[anzahl_augen] = {0};
   static unsigned long startzeit[anzahl_augen] = {0};
@@ -56,11 +66,18 @@ void start() {
   int i = 0;
   blink(0, 500, 0, 0);
   for (i = 0; i < anzahl_augen; i++) {
+<<<<<<< HEAD
     if (tic - starttimer > ledInterval * i)
       blink(i + 1, blinkTime, ledInterval, 0);
   }
   if (tic - starttimer >= ledInterval * (anzahl_augen - 1) || resettimer) {
     Serial.print(starttimer > ledInterval * (anzahl_augen - 1));
+=======
+    if (curtime - starttimer > ledInterval * i)
+      blink(i + 1, blinkTime, ledInterval, 0);
+  }
+  if (curtime - starttimer > ledInterval * (anzahl_augen - 1) || resettimer) {
+>>>>>>> 57c6805bcf8249c044cc1b246a7c7790350cac92
     resettimer = 0;
     starttimer = tic;
     for (int j = 0; j < anzahl_augen; j++) {
