@@ -10,92 +10,115 @@
  * 4     3
  */
 
-const int anzahl_augen = 5;
-<<<<<<< HEAD
-const int ledPin[anzahl_augen] = {2, 3, 4, 5, 6}; // Arduino Pins
-const int tasterPin = 7;        // Eingang fuer den Taster
-const int ledInterval = 15000;  // wechselintervall zum naechsten Led in ms
-const int blinkTime = 100;      // Blinkintervall der Leds
-unsigned long tic = 0;         // speichert die Zeit seit dem Start in ms
-bool resettimer = 0;            // Wenn gesetzt dann wird der Ausgang zurueck gesetzt
-/*
-Parameter:
-  led     = Led Nummer
-  blTime  = blinkdauer in ms
-  durTime = dauer des blinkens danach bleibt das Led an
-  ledReset= wenn 1 dann wird der Ausgang zurueck gesetzt
- */
-=======
-const int ledPin[anzahl_augen] = {2, 3, 4, 5, 6};
-const int tasterPin = 7;
-const int ledInterval = 1000;
-const int blinkTime = 100;
-unsigned long curtime = 0;
-int resettimer = 0;
+const int anzahl_leds = 5;
+const int ledPin[anzahl_leds] = {2, 3, 4, 5, 6}; // Arduino Pins
+const int tasterPin = 7;                         // Eingang fuer den Taster
 
->>>>>>> 57c6805bcf8249c044cc1b246a7c7790350cac92
-void blink(int led, int blTime, int durTime, bool ledReset) {
-  static int ledTime[anzahl_augen] = {0};
-  static unsigned long startzeit[anzahl_augen] = {0};
-  static unsigned long startDurzeit[anzahl_augen] = {0};
-  ledTime[led] = durTime;
-  if (ledReset) {
-    digitalWrite(ledPin[led], 0);
-    ledTime[led] = 0;
-    startzeit[led] = 0;
-    startDurzeit[led] = 0;
-  } else if (startDurzeit[led] == 0) {
-    startDurzeit[led] = tic;
-  } else if (tic - startDurzeit[led] > ledTime[led] && ledTime[led] > 0) {
-    digitalWrite(ledPin[led], HIGH);
-  } else if ((tic - startzeit[led]) > blTime) {
-    digitalWrite(ledPin[led], !digitalRead(ledPin[led]));
-    startzeit[led] = tic;
-  }
-}
+const int aus = 0;
+const int ein = 1;
+const int blinken = 2;
 
-void taster() {
-  if (!digitalRead(tasterPin)) {
-    resettimer = 1;     // setzen des Reset auf HIGH
-    delay(100);         // entcoppeln
-  }
-}
+// aktuelle Zustaende
+int ledStatus[anzahl_leds];
+String statusText[] = {"aus", "ein", "blinken"};
+
+unsigned long startZeit;
+unsigned long tic;
 
 void start() {
-  static unsigned long starttimer = tic;
-  int i = 0;
-  blink(0, 500, 0, 0);
-  for (i = 0; i < anzahl_augen; i++) {
-<<<<<<< HEAD
-    if (tic - starttimer > ledInterval * i)
-      blink(i + 1, blinkTime, ledInterval, 0);
-  }
-  if (tic - starttimer >= ledInterval * (anzahl_augen - 1) || resettimer) {
-    Serial.print(starttimer > ledInterval * (anzahl_augen - 1));
-=======
-    if (curtime - starttimer > ledInterval * i)
-      blink(i + 1, blinkTime, ledInterval, 0);
-  }
-  if (curtime - starttimer > ledInterval * (anzahl_augen - 1) || resettimer) {
->>>>>>> 57c6805bcf8249c044cc1b246a7c7790350cac92
-    resettimer = 0;
-    starttimer = tic;
-    for (int j = 0; j < anzahl_augen; j++) {
-      blink(j, 0, 0, 1);
-    }
-  }
+  // Serial.println("S Hallo");
+  ledStatus[0] = blinken; // led 0 blinkt immer
+  for (int i = 1; i < anzahl_leds; i++)
+    ledStatus[i] = aus; // alle Anderen aus
+  startZeit = millis();
 }
 
 void setup() {
   Serial.begin(57600);
-  for (int i = 0; i < anzahl_augen; i++) {
-    pinMode(ledPin[i], OUTPUT);
-  }
+  for (int i = 0; i < anzahl_leds; i++)
+    pinMode(ledPin[i], OUTPUT); // Pinmode setzen
   pinMode(tasterPin, INPUT_PULLUP);
+  while (digitalRead(tasterPin))
+    ;
+  start();
+}
+
+void checkStart() {
+  // Serial.println("Hallo");
+  if (!digitalRead(tasterPin))
+    // Serial.println("Start");
+    start(); // neustart
+}
+
+void checkZustand() {
+  static int sekundeAlt = 0;
+  int sekunde = (tic - startZeit) / 1000; // Sekunden seit dem start
+  sekunde = sekunde % 60;                 // 0 bis 59
+  if (sekunde != sekundeAlt) {
+    Serial.println();
+    Serial.print("Sekunde ");
+    Serial.println(sekunde);
+    sekundeAlt = sekunde;
+    if (sekunde < 15) {
+      ledStatus[1] = blinken;
+      ledStatus[2] = aus;
+      ledStatus[3] = aus;
+      ledStatus[4] = aus;
+    } else if (sekunde >=15 && sekunde < 30) {
+      ledStatus[1] = ein;
+      ledStatus[2] = blinken;
+      ledStatus[3] = aus;
+      ledStatus[4] = aus;
+    } else if (sekunde >=30 && sekunde < 45) {
+      ledStatus[1] = ein;
+      ledStatus[2] = ein;
+      ledStatus[3] = blinken;
+      ledStatus[4] = aus;
+    } else if (sekunde >=45) {
+      ledStatus[1] = ein;
+      ledStatus[2] = ein;
+      ledStatus[3] = ein;
+      ledStatus[4] = blinken;
+    }
+    for (int ledNummer=1; ledNummer<anzahl_leds; ledNummer++) {
+      Serial.print(ledNummer); Serial.print(" = ");
+      Serial.print(statusText [ledStatus[ledNummer]]); Serial.print("; ");
+    }
+    Serial.println();
+  }
+}
+void schalteLeds() {
+  const int ledNummer = 0;
+  const int blikStartZeit = 500;
+  static unsigned long startZeit = 0;
+  static bool hell = true;
+
+  if (tic > startZeit + blikStartZeit) {
+    hell = !hell;
+    startZeit = tic;
+    for (int i = 0; i < anzahl_leds; i++) {
+      // if(ledStatus[i] == 0) {
+      //   digitalWrite(ledPin[i], LOW);
+      // } else if (ledStatus[i] == 2) {
+      //   digitalWrite(ledPin[i], hell);
+      // } else if (ledStatus[i] == 1) {
+      //   digitalWrite(ledPin[i], HIGH);
+      // }
+      switch (ledStatus[i]) {
+        case aus: digitalWrite(ledPin[i], LOW);
+        break;
+        case ein: digitalWrite(ledPin[i], HIGH);
+        break;
+        case blinken: digitalWrite(ledPin[i], hell);
+      }
+    }
+
+  }
 }
 
 void loop() {
-  tic = millis();
-  taster();
-  start();
+  checkStart();
+  tic = millis(); // Der Zeittakt in Millisekunden
+  checkZustand();
+  schalteLeds();
 }
