@@ -1,124 +1,35 @@
 #include <Arduino.h>
-/*
-  Würfel mit 5 Augen
-*/
+#include <NewPing.h>
 
-// Anordnung der LED's
-/*
- * 1     2
- *    0
- * 4     3
- */
+#define TRIGGER_PIN  7  // Arduino pin tied to trigger pin on ping sensor.
+#define ECHO_PIN     7  // Arduino pin tied to echo pin on ping sensor.
+#define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
-const int anzahl_leds = 5;
-const int ledPin[anzahl_leds] = {2, 3, 4, 5, 6}; // Arduino Pins
-const int tasterPin = 7;                         // Eingang fuer den Taster
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
-const int aus = 0;
-const int ein = 1;
-const int blinken = 2;
-
-// aktuelle Zustaende
-int ledStatus[anzahl_leds];
-String statusText[] = {"aus", "ein", "blinken"};
-
-unsigned long startZeit;
-unsigned long tic;
-
-void start() {
-  // Serial.println("S Hallo");
-  ledStatus[0] = blinken; // led 0 blinkt immer
-  for (int i = 1; i < anzahl_leds; i++)
-    ledStatus[i] = aus; // alle Anderen aus
-  startZeit = millis();
-}
+unsigned int pingSpeed = 50; // How frequently are we going to send out a ping (in milliseconds). 50ms would be 20 times a second.
+unsigned long pingTimer;     // Holds the next ping time.
 
 void setup() {
-  Serial.begin(57600);
-  for (int i = 0; i < anzahl_leds; i++)
-    pinMode(ledPin[i], OUTPUT); // Pinmode setzen
-  pinMode(tasterPin, INPUT_PULLUP);
-  while (digitalRead(tasterPin))
-    ;
-  start();
+  Serial.begin(57600); // Open serial monitor at 115200 baud to see ping results.
+  pingTimer = millis(); // Start now.
 }
-
-void checkStart() {
-  // Serial.println("Hallo");
-  if (!digitalRead(tasterPin))
-    // Serial.println("Start");
-    start(); // neustart
-}
-
-void checkZustand() {
-  static int sekundeAlt = 0;
-  int sekunde = (tic - startZeit) / 1000; // Sekunden seit dem start
-  sekunde = sekunde % 60;                 // 0 bis 59
-  if (sekunde != sekundeAlt) {
-    Serial.println();
-    Serial.print("Sekunde ");
-    Serial.println(sekunde);
-    sekundeAlt = sekunde;
-    if (sekunde < 15) {
-      ledStatus[1] = blinken;
-      ledStatus[2] = aus;
-      ledStatus[3] = aus;
-      ledStatus[4] = aus;
-    } else if (sekunde >=15 && sekunde < 30) {
-      ledStatus[1] = ein;
-      ledStatus[2] = blinken;
-      ledStatus[3] = aus;
-      ledStatus[4] = aus;
-    } else if (sekunde >=30 && sekunde < 45) {
-      ledStatus[1] = ein;
-      ledStatus[2] = ein;
-      ledStatus[3] = blinken;
-      ledStatus[4] = aus;
-    } else if (sekunde >=45) {
-      ledStatus[1] = ein;
-      ledStatus[2] = ein;
-      ledStatus[3] = ein;
-      ledStatus[4] = blinken;
-    }
-    for (int ledNummer=1; ledNummer<anzahl_leds; ledNummer++) {
-      Serial.print(ledNummer); Serial.print(" = ");
-      Serial.print(statusText [ledStatus[ledNummer]]); Serial.print("; ");
-    }
-    Serial.println();
+void echoCheck() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
+  // Don't do anything here!
+  if (sonar.check_timer()) { // This is how you check to see if the ping was received.
+    // Here's where you can add code.
+    Serial.print("Ping: ");
+    Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
+    Serial.println("cm");
   }
-}
-void schalteLeds() {
-  const int ledNummer = 0;
-  const int blikStartZeit = 500;
-  static unsigned long startZeit = 0;
-  static bool hell = true;
-
-  if (tic > startZeit + blikStartZeit) {
-    hell = !hell;
-    startZeit = tic;
-    for (int i = 0; i < anzahl_leds; i++) {
-      // if(ledStatus[i] == 0) {
-      //   digitalWrite(ledPin[i], LOW);
-      // } else if (ledStatus[i] == 2) {
-      //   digitalWrite(ledPin[i], hell);
-      // } else if (ledStatus[i] == 1) {
-      //   digitalWrite(ledPin[i], HIGH);
-      // }
-      switch (ledStatus[i]) {
-        case aus: digitalWrite(ledPin[i], LOW);
-        break;
-        case ein: digitalWrite(ledPin[i], HIGH);
-        break;
-        case blinken: digitalWrite(ledPin[i], hell);
-      }
-    }
-
-  }
+  // Don't do anything here!
 }
 
 void loop() {
-  checkStart();
-  tic = millis(); // Der Zeittakt in Millisekunden
-  checkZustand();
-  schalteLeds();
+  // Notice how there's no delays in this sketch to allow you to do other processing in-line while doing distance pings.
+  if (millis() >= pingTimer) {   // pingSpeed milliseconds since last ping, do another ping.
+    pingTimer += pingSpeed;      // Set the next ping time.
+    sonar.ping_timer(echoCheck); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
+  }
+  // Do other stuff here, really. Think of it as multi-tasking.
 }
