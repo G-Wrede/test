@@ -1,35 +1,110 @@
 #include <Arduino.h>
-#include <NewPing.h>
+/*
+  Turtle Robot
+  Fahren mit Fernbedienung
 
-#define TRIGGER_PIN  7  // Arduino pin tied to trigger pin on ping sensor.
-#define ECHO_PIN     7  // Arduino pin tied to echo pin on ping sensor.
-#define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+  Version 1.0
+  Der Hobbyelektroniker
+  Der Code ist Public Domain und kann ohne Einschränkungen frei verwendet werden
+*/
+#include <IRremote.h>
 
-NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
+// Infrarotempfänger
+const int remote_Pin = A0;
+IRrecv irEmpf(remote_Pin); // Empfängerobjekt erzeugen und Pin A0 zuweisen
+decode_results irResults;  // Variable für den Empfang der Kommandos
 
-unsigned int pingSpeed = 50; // How frequently are we going to send out a ping (in milliseconds). 50ms would be 20 times a second.
-unsigned long pingTimer;     // Holds the next ping time.
+const long cmd_vor = 0x00FF629D;
+const long cmd_zurueck = 0x00FFA857;
+const long cmd_links = 0x00FF22DD;
+const long cmd_rechts = 0x00FFC23D;
+const long cmd_stopp = 0x00FF02FD;
+
+const long cmd_langsam = 0x00FF6897; // 1
+const long cmd_mittel = 0x00FF9867;  // 2
+const long cmd_schnell = 0x00FFB04F; // 3
+
+// Motoren
+const int motor_links_richtung_Pin = 2;
+const int motor_links_geschwindigkeit_Pin = 9;
+const int motor_rechts_richtung_Pin = 4;
+const int motor_rechts_geschwindigkeit_Pin = 5;
+
+const int geschwindigkeit_langsam = 120;
+const int geschwindigkeit_mittel = 190;
+const int geschwindigkeit_schnell = 255;
+
+int geschwindigkeit; // aktuelle Geschwindigkeit
+
+void set_geschwindigkeit(int neueGeschwindigkeit) {
+  geschwindigkeit = neueGeschwindigkeit;
+  analogWrite(motor_links_geschwindigkeit_Pin, geschwindigkeit);
+  analogWrite(motor_rechts_geschwindigkeit_Pin, geschwindigkeit);
+}
+
+void stopp() {
+  set_geschwindigkeit(0);
+}
+
+void vor() {
+  if (geschwindigkeit == 0) geschwindigkeit = geschwindigkeit_mittel;
+  digitalWrite(motor_rechts_richtung_Pin, HIGH); // beide vor
+  digitalWrite(motor_links_richtung_Pin, HIGH);
+  analogWrite(motor_links_geschwindigkeit_Pin, geschwindigkeit);
+  analogWrite(motor_rechts_geschwindigkeit_Pin, geschwindigkeit);
+}
+
+void zurueck() {
+  if (geschwindigkeit == 0) geschwindigkeit = geschwindigkeit_mittel;
+  digitalWrite(motor_rechts_richtung_Pin, LOW); // beide zurück
+  digitalWrite(motor_links_richtung_Pin, LOW);
+  analogWrite(motor_links_geschwindigkeit_Pin, geschwindigkeit);
+  analogWrite(motor_rechts_geschwindigkeit_Pin, geschwindigkeit);
+}
+
+void rechts() {
+  if (geschwindigkeit == 0) geschwindigkeit = geschwindigkeit_mittel;
+  digitalWrite(motor_rechts_richtung_Pin, LOW); // zurück
+  digitalWrite(motor_links_richtung_Pin, HIGH); // vor
+  analogWrite(motor_links_geschwindigkeit_Pin, geschwindigkeit);
+  analogWrite(motor_rechts_geschwindigkeit_Pin, geschwindigkeit);
+}
+
+void links() {
+  if (geschwindigkeit == 0) geschwindigkeit = geschwindigkeit_mittel;
+  digitalWrite(motor_rechts_richtung_Pin, HIGH); // vor
+  digitalWrite(motor_links_richtung_Pin, LOW); // zurück
+  analogWrite(motor_links_geschwindigkeit_Pin, geschwindigkeit);
+  analogWrite(motor_rechts_geschwindigkeit_Pin, geschwindigkeit);
+}
 
 void setup() {
-  Serial.begin(57600); // Open serial monitor at 115200 baud to see ping results.
-  pingTimer = millis(); // Start now.
+  irEmpf.enableIRIn(); // Empfänger einschalten
+
+  // Die digitalen Ausgänge benötigen pinMode(), die PWM-Ausgänge nicht
+  pinMode(motor_links_richtung_Pin,OUTPUT);
+  pinMode(motor_rechts_richtung_Pin,OUTPUT);
+  stopp();  // sicherstellen, dass der Roboter nicht gleich losfährt
 }
-void echoCheck() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
-  // Don't do anything here!
-  if (sonar.check_timer()) { // This is how you check to see if the ping was received.
-    // Here's where you can add code.
-    Serial.print("Ping: ");
-    Serial.print(sonar.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
-    Serial.println("cm");
+
+
+
+void checkCommands() {
+  if (irEmpf.decode(&irResults)) { // Falls etwas empfangen wurde
+    switch (irResults.value) {
+      case cmd_vor: vor(); break;
+      case cmd_zurueck: zurueck(); break;
+      case cmd_rechts: rechts(); break;
+      case cmd_links: links(); break;
+      case cmd_stopp: stopp(); break;
+      case cmd_langsam: set_geschwindigkeit(geschwindigkeit_langsam); break;
+      case cmd_mittel: set_geschwindigkeit(geschwindigkeit_mittel); break;
+      case cmd_schnell: set_geschwindigkeit(geschwindigkeit_schnell); break;
+    }
+    irEmpf.resume();
   }
-  // Don't do anything here!
 }
 
 void loop() {
-  // Notice how there's no delays in this sketch to allow you to do other processing in-line while doing distance pings.
-  if (millis() >= pingTimer) {   // pingSpeed milliseconds since last ping, do another ping.
-    pingTimer += pingSpeed;      // Set the next ping time.
-    sonar.ping_timer(echoCheck); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
-  }
-  // Do other stuff here, really. Think of it as multi-tasking.
+  checkCommands();
 }
