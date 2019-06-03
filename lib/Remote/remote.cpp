@@ -6,7 +6,17 @@
   Gerhard Wrede
 */
 
-#define VERS 100
+/*
+  Turtle Robot
+  Infrarot Fernbedienung
+  Version 1.10, 18.05.2019
+  Der Hobbyelektroniker
+  https://community.hobbyelektroniker.ch
+  https://www.youtube.com/c/HobbyelektronikerCh
+  Der Code kann mit Quellenangabe frei verwendet werden.
+*/
+
+#define VERS 110
 
 #include <arduino.h>
 #include "globals.h"
@@ -49,28 +59,24 @@ int remote_command() {
   int result = cmd_kein;
   if (irEmpf.decode(&results)) { // Falls etwas empfangen wurde
     switch (results.value) {
-      // case taste_vor: result = cmd_vor; break;
-      case taste_vor: result = cmd_zurueck; break;
-      // case taste_zurueck: result = cmd_zurueck; break;
-      case taste_zurueck: result = cmd_vor; break;
-      //case taste_rechts: result = cmd_drehen_rechts; break;
+      case taste_vor: result = cmd_vor; break;
+      case taste_zurueck: result = cmd_zurueck; break;
       case taste_rechts: result = cmd_kurve_rechts; break;
-      //case taste_links: result = cmd_drehen_links; break;
       case taste_links: result = cmd_kurve_links; break;
-      case taste_ok: result = cmd_stopp; break;
-      case taste_1: result = cmd_langsam; break;
-      case taste_2: result = cmd_mittel; break;
-      case taste_3: result = cmd_schnell; break;
-      case taste_4: result = cmd_kurve_links; break;
-      case taste_6: result = cmd_kurve_rechts; break;
+      case taste_ok: result = cmd_gerade; break;
+      case taste_1: result = cmd_drehen_links; break;
+      case taste_2: result = cmd_stopp; break;
+      case taste_3: result = cmd_drehen_rechts; break;
+      case taste_4: result = cmd_langsam; break;
+      case taste_5: result = cmd_mittel; break;
+      case taste_6: result = cmd_schnell; break;
       case taste_7: result = cmd_langsamer; break;
+      case taste_8: result = cmd_mittel; break;
       case taste_9: result = cmd_schneller; break;
 
-      case taste_5: result = cmd_user1; break;
-      case taste_8: result = cmd_user2; break;
-      case taste_stern: result = cmd_user3; break;
-      case taste_0: result = cmd_user4; break;
-      case taste_raute: result = cmd_user5; break;
+      case taste_stern: result = cmd_user1; break;
+      case taste_0: result = cmd_user2; break;
+      case taste_raute: result = cmd_user3; break;
     }
     irEmpf.resume();
   }

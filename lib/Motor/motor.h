@@ -32,6 +32,8 @@ void motor_drehen_links();
 void motor_kurve(int wert);
 void motor_kurve_rechts();
 void motor_kurve_links();
+void motor_gerade();
+int motor_getGeschwindigkeit();
 
 void motor_init();
 int motor_version();

@@ -2,11 +2,11 @@
   Turtle Robot
   Motor Steuerungen
 
-  Version 1.00, 29.05.2019
+  Version 1.10, 03.06.2019
   Gerhard Wrede
 */
 
-#define VERS 100;
+#define VERS 110;
 
 #include "globals.h"
 #include "motor.h"
@@ -119,11 +119,11 @@ void motor_stopp() {
 }
 
 void motor_vor() {
-  steuerung(vor,motor_kurve_keine,motor_unveraendert);
+  steuerung(vor,motor_unveraendert,motor_unveraendert);
 }
 
 void motor_zurueck() {
-  steuerung(zurueck,motor_kurve_keine,motor_unveraendert);
+  steuerung(zurueck,motor_unveraendert,motor_unveraendert);
 }
 
 void motor_drehen_rechts() {
@@ -148,6 +148,14 @@ void motor_kurve_links() {
   kurve--;
   if (kurve < motor_kurve_min) kurve = motor_kurve_min;
   motor_kurve(kurve);
+}
+
+void motor_gerade() {
+  steuerung(motor_unveraendert,motor_kurve_keine,motor_unveraendert);
+}
+
+int motor_getGeschwindigkeit(){
+  return geschwindigkeit;
 }
 
 void motor_init() {
